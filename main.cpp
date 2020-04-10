@@ -31,6 +31,9 @@ void find_minmax(const vector<double> &numbers, double& min, double& max)
 
 vector <size_t>  make_histogram(const vector<double> &numbers,size_t bin_count)
     {
+        double min;
+        double max;
+        find_minmax(numbers,min,max);
         vector<size_t> bins(bin_count,0);
         for (double number : numbers)
             {
@@ -94,9 +97,6 @@ int main() {
     double min , max;
     // Поиск максимума и минимума с помобщью процедуры
     find_minmax(numbers,min,max);
-
-
-
     const auto bins = make_histogram(numbers, bin_count);
     // Вывод данных
     show_histogram_text(bins);
