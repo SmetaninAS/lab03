@@ -5,7 +5,6 @@
 #include "histogram.h"
 using namespace std;
 
-
 vector<double> input_numbers(istream& in,size_t count)
 {
     vector<double> result(count);
@@ -14,7 +13,6 @@ vector<double> input_numbers(istream& in,size_t count)
     }
     return result;
 }
-
 Input read_input(istream& in,bool prompt)
 {
     Input data;
@@ -134,21 +132,28 @@ for (size_t bin : bins)
     svg_end();
 }
 
-int main(int argc, char* argv[]) {
-if(argc>1)
+int main(int argc, char* argv[])
 {
-cerr<< argc;
-for (int i=0;i<argc;i++)
-{
-cerr<< "argv[" << i <<"] = ";
-cerr<< argv[i]<<" ";
-}
-
-curl_global_init(CURL_GLOBAL_ALL);
-const auto input= read_input(cin,true);
-const auto bins = make_histogram(input);
-show_histogram_svg(bins);
-return 0;
-}
-return 0;
+    if(argc>1)
+    {
+    CURL* curl = curl_easy_init();
+    curl_global_init(CURL_GLOBAL_ALL);
+    if(curl)
+        {
+  CURLcode res;
+  curl_easy_setopt(curl, CURLOPT_URL, argv[1]);
+  res = curl_easy_perform(curl);
+  if (res !=0)
+    {
+  curl_easy_strerror(res);
+  exit(1);
+    }
+  curl_easy_cleanup(curl);
+        }
+    return 0;
+    }
+    const auto input= read_input(cin,true);
+    const auto bins = make_histogram(input);
+    show_histogram_svg(bins);
+    return 0;
 }
