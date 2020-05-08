@@ -1,5 +1,7 @@
 #include <curl/curl.h>
 #include <iostream>
+#include <sstream>
+#include <string>
 #include <vector>
 #include <iomanip>
 #include "histogram.h"
@@ -87,6 +89,7 @@ void show_histogram_text(const vector<size_t> &bins)
     }
 
 
+
   void svg_begin(double width, double height)
 {
     cout << "<?xml version='1.0' encoding='UTF-8'?>\n";
@@ -132,28 +135,50 @@ for (size_t bin : bins)
     svg_end();
 }
 
-int main(int argc, char* argv[])
+size_t write_data(void* items, size_t item_size, size_t item_count, void* ctx)
 {
-    if(argc>1)
-    {
+ stringstream* buffer = reinterpret_cast<stringstream*>(ctx);
+    const char* itemsch = reinterpret_cast<const char*>(items);
+    size_t data_size;
+    data_size=item_size* item_count;
+    buffer->write(itemsch, data_size);
+    return data_size;
+}
+
+Input download(const string& address)
+{
+    stringstream buffer;
+     curl_global_init(CURL_GLOBAL_ALL);
     CURL* curl = curl_easy_init();
-    curl_global_init(CURL_GLOBAL_ALL);
-    if(curl)
+    if (curl)
         {
   CURLcode res;
-  curl_easy_setopt(curl, CURLOPT_URL, argv[1]);
+  curl_easy_setopt(curl, CURLOPT_URL, address.c_str());
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
   res = curl_easy_perform(curl);
-  if (res !=0)
+  if(res!=0)
     {
-  curl_easy_strerror(res);
-  exit(1);
+    cout<<curl_easy_strerror(curl_easy_perform(curl));
+    exit(1);
     }
-  curl_easy_cleanup(curl);
-        }
-    return 0;
+    curl_easy_cleanup(curl);
     }
-    const auto input= read_input(cin,true);
+    return read_input(buffer, false);
+}
+
+
+int main(int argc, char* argv[])
+{
+    Input input;
+    if (argc > 1) {
+        input = download(argv[1]);
+    } else {
+        input = read_input(cin, true);
+    }
+
     const auto bins = make_histogram(input);
     show_histogram_svg(bins);
     return 0;
 }
+
