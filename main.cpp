@@ -1,3 +1,4 @@
+#include <curl/curl.h>
 #include <iostream>
 #include <vector>
 #include <iomanip>
@@ -32,18 +33,18 @@ Input read_input(istream& in,bool prompt)
     return data;
 }
 
-vector <size_t>  make_histogram(struct Input parm)
+vector <size_t>  make_histogram(struct Input bindata)
     {
 
         double min;
         double max;
-        find_minmax(parm.numbers,min,max);
-        vector<size_t> bins(parm.bin_count,0);
-        for (double number : parm.numbers)
+        find_minmax(bindata.numbers,min,max);
+        vector<size_t> bins(bindata.bin_count,0);
+        for (double number : bindata.numbers)
             {
         size_t bin;
-        bin = (number - min) / (max - min) * parm.bin_count;
-        if (bin == parm.bin_count)
+        bin = (number - min) / (max - min) * bindata.bin_count;
+        if (bin == bindata.bin_count)
             {
             bin--;
             }
@@ -133,9 +134,21 @@ for (size_t bin : bins)
     svg_end();
 }
 
-int main() {
-    const auto input= read_input(cin,true);
-    const auto bins = make_histogram(input);
-    show_histogram_svg(bins);
-    return 0;
+int main(int argc, char* argv[]) {
+if(argc>1)
+{
+cerr<< argc;
+for (int i=0;i<argc;i++)
+{
+cerr<< "argv[" << i <<"] = ";
+cerr<< argv[i]<<" ";
+}
+
+curl_global_init(CURL_GLOBAL_ALL);
+const auto input= read_input(cin,true);
+const auto bins = make_histogram(input);
+show_histogram_svg(bins);
+return 0;
+}
+return 0;
 }
