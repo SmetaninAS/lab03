@@ -1,13 +1,14 @@
 #include <iostream>
 #include <vector>
+#include <iomanip>
 #include "histogram.h"
 using namespace std;
 
-vector<double> input_numbers(size_t count)
+vector<double> input_numbers(istream& in,size_t count)
 {
     vector<double> result(count);
     for (size_t i = 0; i < count; i++) {
-        cin >> result[i];
+        in >> result[i];
     }
     return result;
 }
@@ -116,12 +117,11 @@ for (size_t bin : bins)
 
 int main() {
     //
-
     size_t number_count;
     cerr << "Enter number count: ";
     cin >> number_count;
 // Ввод числе заменен вызовом функции:
-   const auto numbers = input_numbers(number_count);
+   const auto numbers = input_numbers(cin,number_count);
     size_t bin_count;
     cerr << "Enter column count: ";
     cin >> bin_count;
