@@ -1,10 +1,19 @@
+
 #include <curl/curl.h>
 #include <iostream>
 #include <sstream>
+
+#include <windows.h>
+#include <curl/curl.h>
+#include <iostream>
+#include <sstream>
+#include <tchar.h>
+
 #include <string>
 #include <vector>
 #include <iomanip>
 #include "histogram.h"
+#define INFO_BUFFER_SIZE 32767
 using namespace std;
 
 vector<double> input_numbers(istream& in,size_t count)
@@ -88,6 +97,42 @@ void show_histogram_text(const vector<size_t> &bins)
     }
     }
 
+int printf(const char* format, ...);
+ DWORD WINAPI GetVersion(void);
+ BOOL GetComputerNameA
+    (
+    LPSTR   lpBuffer,
+    LPDWORD nSize
+    );
+string
+make_info_text() {
+    stringstream buffer;
+    DWORD info = GetVersion();
+    DWORD mask = 0x0000ffff;
+    DWORD version = info & mask;
+    DWORD mask_major = 0b00000000'00000000'00000000'11111111;
+    DWORD version_major = version & mask_major;
+    DWORD version_minor = version >> 8;
+
+   // printf("%u", version_major);
+   // cerr<< ".";
+   //printf("%u\n", version_minor );
+
+    // TODO: получить версию системы, записать в буфер.
+    // TODO: получить имя компьютера, записать в буфер.
+
+    char system_dir[MAX_PATH];
+    GetSystemDirectory(system_dir, MAX_PATH);
+   // printf("System directory: %s", system_dir);
+    cerr <<endl;
+    TCHAR  infoBuf[INFO_BUFFER_SIZE];
+    DWORD  bufCharCount = INFO_BUFFER_SIZE;
+    GetComputerName( infoBuf, &bufCharCount );
+   //  printf("System name: %s", infoBuf);
+     cerr<<endl;
+     buffer <<"System name : "<< infoBuf <<"  "<<"directory : "<< system_dir<<"  " <<"version : "<<version_major<<"."<<version_minor;
+    return buffer.str();
+}
 
 
   void svg_begin(double width, double height)
@@ -116,7 +161,7 @@ void svg_rect(double x, double y, double width, double height,string stroke = "b
 }
 void show_histogram_svg(const vector<size_t>& bins)
 {
-const auto IMAGE_WIDTH = 400;
+const auto IMAGE_WIDTH = 600;
 const auto IMAGE_HEIGHT = 300;
 const auto TEXT_LEFT = 20;
 const auto TEXT_BASELINE = 20;
@@ -124,7 +169,9 @@ const auto TEXT_WIDTH = 50;
 const auto BIN_HEIGHT = 30;
 const auto BLOCK_WIDTH = 10;
 double top = 0;
-  svg_begin(400, 300);
+string name = make_info_text();
+
+  svg_begin(600, 300);
 for (size_t bin : bins)
     {
     const double bin_width = BLOCK_WIDTH * bin;
@@ -132,6 +179,8 @@ for (size_t bin : bins)
     svg_rect(TEXT_WIDTH, top, bin_width, BIN_HEIGHT,"blue","#aaffaa");
     top += BIN_HEIGHT;
     }
+    svg_text(TEXT_LEFT, top + TEXT_BASELINE, name);
+
     svg_end();
 }
 
@@ -166,7 +215,6 @@ Input download(const string& address)
     }
     return read_input(buffer, false);
 }
-
 
 int main(int argc, char* argv[])
 {
