@@ -1,14 +1,11 @@
-
 #include <curl/curl.h>
 #include <iostream>
 #include <sstream>
-
 #include <windows.h>
 #include <curl/curl.h>
 #include <iostream>
 #include <sstream>
 #include <tchar.h>
-
 #include <string>
 #include <vector>
 #include <iomanip>
@@ -110,9 +107,8 @@ make_info_text() {
     DWORD info = GetVersion();
     DWORD mask = 0x0000ffff;
     DWORD version = info & mask;
+    DWORD platform = info>>16;
     DWORD mask_major = 0b00000000'00000000'00000000'11111111;
-    DWORD version_major = version & mask_major;
-    DWORD version_minor = version >> 8;
 
    // printf("%u", version_major);
    // cerr<< ".";
@@ -130,7 +126,14 @@ make_info_text() {
     GetComputerName( infoBuf, &bufCharCount );
    //  printf("System name: %s", infoBuf);
      cerr<<endl;
+     if ((info&0x80000000)==0)
+     {
+      DWORD version_major = version & mask_major;
+      DWORD version_minor = version >> 8;
+      DWORD build = platform;
+
      buffer <<"System name : "<< infoBuf <<"  "<<"directory : "<< system_dir<<"  " <<"version : "<<version_major<<"."<<version_minor;
+      }
     return buffer.str();
 }
 
@@ -216,6 +219,7 @@ Input download(const string& address)
     return read_input(buffer, false);
 }
 
+
 int main(int argc, char* argv[])
 {
     Input input;
@@ -224,7 +228,6 @@ int main(int argc, char* argv[])
     } else {
         input = read_input(cin, true);
     }
-
     const auto bins = make_histogram(input);
     show_histogram_svg(bins);
     return 0;
