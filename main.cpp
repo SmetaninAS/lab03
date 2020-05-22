@@ -1,4 +1,8 @@
+
+#include <curl/curl.h>
 #include <iostream>
+#include <sstream>
+#include <string>
 #include <vector>
 #include <iomanip>
 #include "histogram.h"
@@ -12,20 +16,36 @@ vector<double> input_numbers(istream& in,size_t count)
     }
     return result;
 }
+Input read_input(istream& in,bool prompt)
+{
+    Input data;
+    if (prompt==true)
+    cerr << "Enter number count: ";
+    size_t number_count;
+    cin >> number_count;
+    if (prompt==true)
+    cerr << "Enter numbers: ";
+    data.numbers = input_numbers(in, number_count);
+    size_t bin_count;
+    if (prompt==true)
+    cerr << "Enter column count: ";
+    cin >> data.bin_count;
 
+    return data;
+}
 
-
-vector <size_t>  make_histogram(const vector<double> &numbers,size_t bin_count)
+vector <size_t>  make_histogram(struct Input bindata)
     {
+
         double min;
         double max;
-        find_minmax(numbers,min,max);
-        vector<size_t> bins(bin_count,0);
-        for (double number : numbers)
+        find_minmax(bindata.numbers,min,max);
+        vector<size_t> bins(bindata.bin_count,0);
+        for (double number : bindata.numbers)
             {
         size_t bin;
-        bin = (number - min) / (max - min) * bin_count;
-        if (bin == bin_count)
+        bin = (number - min) / (max - min) * bindata.bin_count;
+        if (bin == bindata.bin_count)
             {
             bin--;
             }
@@ -68,6 +88,7 @@ void show_histogram_text(const vector<size_t> &bins)
         cout << '\n';
     }
     }
+
 
 
   void svg_begin(double width, double height)
@@ -115,22 +136,49 @@ for (size_t bin : bins)
     svg_end();
 }
 
-int main() {
-    //
-    size_t number_count;
-    cerr << "Enter number count: ";
-    cin >> number_count;
-// Ввод числе заменен вызовом функции:
-   const auto numbers = input_numbers(cin,number_count);
-    size_t bin_count;
-    cerr << "Enter column count: ";
-    cin >> bin_count;
-    // Обработка данных
-    double min , max;
-    // Поиск максимума и минимума с помобщью процедуры
-    find_minmax(numbers,min,max);
-    const auto bins = make_histogram(numbers, bin_count);
-    // Вывод данных
+size_t write_data(void* items, size_t item_size, size_t item_count, void* ctx)
+{
+ stringstream* buffer = reinterpret_cast<stringstream*>(ctx);
+    const char* itemsch = reinterpret_cast<const char*>(items);
+    size_t data_size;
+    data_size=item_size* item_count;
+    buffer->write(itemsch, data_size);
+    return data_size;
+}
+
+Input download(const string& address)
+{
+    stringstream buffer;
+     curl_global_init(CURL_GLOBAL_ALL);
+    CURL* curl = curl_easy_init();
+    if (curl)
+        {
+  CURLcode res;
+  curl_easy_setopt(curl, CURLOPT_URL, address.c_str());
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
+  res = curl_easy_perform(curl);
+  if(res!=0)
+    {
+    cout<<curl_easy_strerror(curl_easy_perform(curl));
+    exit(1);
+    }
+    curl_easy_cleanup(curl);
+    }
+    return read_input(buffer, false);
+}
+
+
+int main(int argc, char* argv[])
+{
+    Input input;
+    if (argc > 1) {
+        input = download(argv[1]);
+    } else {
+        input = read_input(cin, true);
+    }
+
+    const auto bins = make_histogram(input);
     show_histogram_svg(bins);
     return 0;
 }
